@@ -2,4 +2,14 @@
 # Displays listening ports. Includes listening sockets as well
 # + as the PID and name of the program to which each socket belongs.
 
-netstat -lp
+if ! command -v lsof &>/dev/null; then
+    echo "Error: 'lsof' command not found. Please install it."
+    exit 1
+fi
+
+echo "Proto  PID/Program name    Address"
+
+lsof -i -n -P | awk '/LISTEN/ {print $1, $2, $9}' | while read -r proto pid addr; do
+    program_name=$(ps -p "$pid" -o comm= 2>/dev/null)
+    echo "$proto  $pid/$program_name  $addr"
+done
